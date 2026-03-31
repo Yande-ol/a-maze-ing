@@ -37,8 +37,9 @@ class MazeGenerator:
         while stack:
             current_x, current_y = stack[-1]
 
-            neighbors = self.get_unvisited_neighbors
-            (current_x, current_y, visited)
+            neighbors = self.get_unvisited_neighbors(
+                current_x, current_y, visited
+                )
 
             if neighbors:
                 next_x, next_y, direction, bit = random.choice(neighbors)
