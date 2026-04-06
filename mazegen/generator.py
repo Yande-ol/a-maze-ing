@@ -99,7 +99,7 @@ class MazeGenerator:
                 neighbors.append((nx, ny, direction, bit))
         return neighbors
 
-def generate(self, start_x: int = 0, start_y: int = 0) -> List[List[int]]:
+    def generate(self, start_x: int = 0, start_y: int = 0) -> List[List[int]]:
         """
         Gera o labirinto usando o algoritmo de Recursive Backtracker.
 
@@ -109,10 +109,11 @@ def generate(self, start_x: int = 0, start_y: int = 0) -> List[List[int]]:
 
         Returns:
             List[List[int]]: A matriz do labirinto gerada.
-        """
+    """
         # 1. Reset da grid para garantir que começamos do zero
-        self.grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
-        
+        self.grid = [[0 for _ in range(self.width)]
+                     for _ in range(self.height)]
+
         # 2. Inicializa a matriz de visitados
         visited: List[List[bool]] = [
             [False for _ in range(self.width)]
