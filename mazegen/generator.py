@@ -99,7 +99,7 @@ class MazeGenerator:
                 neighbors.append((nx, ny, direction, bit))
         return neighbors
 
-    def generate(self, start_x: int = 0, start_y: int = 0) -> List[List[int]]:
+def generate(self, start_x: int = 0, start_y: int = 0) -> List[List[int]]:
         """
         Gera o labirinto usando o algoritmo de Recursive Backtracker.
 
@@ -110,14 +110,33 @@ class MazeGenerator:
         Returns:
             List[List[int]]: A matriz do labirinto gerada.
         """
+        # 1. Reset da grid para garantir que começamos do zero
+        self.grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
+        
+        # 2. Inicializa a matriz de visitados
         visited: List[List[bool]] = [
             [False for _ in range(self.width)]
             for _ in range(self.height)
         ]
 
+        # 3. CHAMADA DO PADRÃO 42 (Obrigatório Cap. IV.4)
+        self._apply_42_pattern(visited)
+
+        # 4. Verificação de segurança: se o start cair no '42', move para (0,0)
+        # Se (0,0) também for parte do 42, o código procurará a próxima livre.
+        if visited[start_y][start_x]:
+            start_x, start_y = 0, 0
+            if visited[start_y][start_x]:
+                for r in range(self.height):
+                    for c in range(self.width):
+                        if not visited[r][c]:
+                            start_x, start_y = c, r
+                            break
+
         stack: List[Tuple[int, int]] = [(start_x, start_y)]
         visited[start_y][start_x] = True
 
+        # 5. Algoritmo de geração (DFS)
         while stack:
             current_x, current_y = stack[-1]
 
