@@ -51,6 +51,33 @@ class MazeGenerator:
         """
         return 0 <= x < self.width and 0 <= y < self.height
 
+    def _apply_42_pattern(self, visited: List[List[bool]]) -> None:
+        """"
+        Desenha o padrão '42' usando células totalmente fechadas (0).
+        """
+
+        if self.width < 15 or self.height < 7:
+            print("Error: Maze too small to draw '42' parttern.")
+            return
+
+        pattern = [
+            # Desenho do numeor 4
+            (0, 0), (0, 1), (0, 2), (1, 2),
+            (2, 0), (2, 1), (2, 2), (2, 3), (2, 4),
+            # Desenho do numero 2
+            (4, 0), (5, 0), (6, 0), (6, 1),
+            (6, 2), (5, 2), (4, 2), (4, 3), (4, 4), (5, 4), (6, 4)
+        ]
+        # Centralizar o desenho no labirinto.
+        offset_x = (self.width // 2) - 3
+        offset_y = (self.height // 2) - 2
+
+        for dx, dy in pattern:
+            nx, ny = offset_x + dx, offset_y + dy
+            if self.is_valid(nx, ny):
+                visited[ny][nx] = True
+                self.grid[ny][nx] = 0
+
     def get_unvisited_neighbors(
         self, x: int, y: int, visited: List[List[bool]]
     ) -> List[Tuple[int, int, str, int]]:
