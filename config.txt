@@ -1,8 +1,11 @@
 # Maze Configuration
-WIDTH=20
-HEIGHT=20
+WIDTH=15
+HEIGHT=15
 ENTRY=0,0
-EXIT=18,18
+EXIT=8,8    
 OUTPUT_FILE=maze.txt
 PERFECT=True
 ALGORITHM=prim
+# SEED=0 => random generation
+# SEED=<non-zero int> => reproducible generation
+SEED=0

@@ -19,6 +19,9 @@ if PROJECT_ROOT not in sys.path:
 
 def build_pattern_42(cols: int, rows: int) -> list[tuple[int, int]]:
     """Create coordinates for '42' pattern centered on the map."""
+    if cols < 15 or rows < 7:
+        return []
+
     pattern = [
         # Digit 4
         (0, 0), (0, 1), (0, 2), (1, 2),
@@ -153,12 +156,15 @@ class MazeApp:
         exit_coords = parse_coord_pair(config["EXIT"])
         perfect = config["PERFECT"].strip().lower() == "true"
         algorithm = config.get("ALGORITHM", "dfs").strip().lower()
+        seed = int(config.get("SEED", 0))
 
         if algorithm not in {"dfs", "prim"}:
             raise ValueError("ALGORITHM must be 'dfs' or 'prim'.")
 
-        seed = random.SystemRandom().randint(1, 2**32 - 1)
-        random.seed(seed)
+        if seed != 0:
+            random.seed(seed)
+        else:
+            random.seed(random.SystemRandom().randint(1, 2**32 - 1))
 
         generator = MazeGenerator(width, height)
         grid = generator.generate(algorithm)
@@ -199,10 +205,16 @@ class MazeApp:
         exit_coords = parse_coord_pair(config["EXIT"])
         perfect = config["PERFECT"].strip().lower() == "true"
         algorithm = config.get("ALGORITHM", "dfs").strip().lower()
+        seed = int(config.get("SEED", 0))
 
         if algorithm != "prim":
             self.reload_maze()
             return
+
+        if seed != 0:
+            random.seed(seed)
+        else:
+            random.seed(random.SystemRandom().randint(1, 2**32 - 1))
 
         self.generation_algorithm = algorithm
         output_file = config["OUTPUT_FILE"]

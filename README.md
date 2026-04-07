@@ -84,6 +84,11 @@ Comments start with `#`.
 - `ALGORITHM=<dfs|prim>`
 - `SEED=<int>`
 
+`SEED` behavior:
+- If `SEED` is omitted, generation is random.
+- If `SEED=0`, generation is random (same behavior as omitted).
+- If `SEED` is a non-zero integer (for example `SEED=42`), generation is reproducible.
+
 ### Example
 ```txt
 # Maze Configuration

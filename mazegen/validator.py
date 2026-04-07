@@ -150,6 +150,12 @@ def validate_maze_structure(
                 continue
             walkable.add((x, y))
 
+    if pattern_cells:
+        for px, py in pattern_cells:
+            if grid[py][px] != 0:
+                msg = "42 pattern must be fully closed when size allows it"
+                raise ValueError(msg)
+
     if entry not in walkable:
         raise ValueError("ENTRY is in a blocked cell.")
     if exit_coords not in walkable:
