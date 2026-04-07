@@ -7,7 +7,7 @@ name = "mazegen"
 version = "1.0.0"
 description = "Maze generation and solving engine for 42"
 readme = "README.md"
-authors = [{name = "Yan Oliveira"}]
+authors = [{name = "febraga and yande-ol."}]
 requires-python = ">=3.10"
 license = {text = "MIT"}
 

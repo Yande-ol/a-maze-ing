@@ -1,40 +1,41 @@
-# Variáveis de Caminho
 PYTHON = venv/bin/python
 PIP = venv/bin/pip
-MLX_WHEEL = mlx-2.2-py3-none-any.whl
+FLAKE8 = venv/bin/flake8
+MYPY = venv/bin/mypy
 
-# Cores para o terminal
-GREEN = \033[0;32m
-RESET = \033[0m
+# Escopo do projeto (evita varrer venv)
+SRC = a_maze_ing.py mazegen visualizer
 
 all: install
 
 install:
-	@echo "🔧 Criando ambiente virtual..."
 	python3 -m venv venv
-	@echo "📦 Instalando ferramentas e MiniLibX local..."
 	$(PIP) install --upgrade pip
 	$(PIP) install flake8 mypy
-	# Esta linha instala o arquivo .whl que você tem na pasta
-	$(PIP) install ./$(MLX_WHEEL)
-	@echo "$(GREEN)✅ Pronto! Use 'make run' para gerar ou 'make viz' para ver.$(RESET)"
+	$(PIP) install ./mlx-2.2-py3-none-any.whl
 
 run:
-	@echo "🚀 Gerando labirinto..."
 	$(PYTHON) a_maze_ing.py config.txt
 
-viz:
-	@echo "🎨 Abrindo visualizador gráfico..."
-	$(PYTHON) visualizer/graphical.py
+debug:
+	$(PYTHON) -m pdb a_maze_ing.py config.txt
 
-lint:
-	@echo "🔍 Verificando normas da 42 (Flake8 & Mypy)..."
-	venv/bin/flake8 .
-	venv/bin/mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+viz:
+	PYTHONPATH=. $(PYTHON) visualizer/graphical.py maze.txt
+
+vix: viz
 
 clean:
-	@echo "🧹 Limpando ambiente..."
-	rm -rf venv __pycache__ visualizer/__pycache__ .mypy_cache
+	rm -rf venv __pycache__ .mypy_cache
+	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -f maze.txt
 
-.PHONY: all install run viz lint clean
+lint:
+	$(FLAKE8) $(SRC)
+	$(MYPY) $(SRC) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+
+lint-strict:
+	$(FLAKE8) $(SRC)
+	$(MYPY) $(SRC) --strict
+
+.PHONY: all install run debug viz vix clean lint lint-strict

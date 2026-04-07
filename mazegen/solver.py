@@ -4,19 +4,18 @@ from typing import List, Tuple, Dict, Optional
 def solve(
     grid: List[List[int]],
     start: Tuple[int, int] = (0, 0),
-    end: Optional[Tuple[int, int]] = None
+    end: Optional[Tuple[int, int]] = None,
 ) -> List[Tuple[int, int]]:
     """
-    Encontra o caminho entre dois pontos usando DFS e lógica de bits.
+    Find path between two points using DFS and bitwise logic.
 
     Args:
-        grid (List[List[int]]): A matriz do labirinto em formato bitwise.
-        start (Tuple[int, int]): Coordenada inicial (x, y).
-        end (Optional[Tuple[int, int]]):
-        Coordenada final. Se None, usa o canto.
+        grid (List[List[int]]): The maze matrix in bitwise format.
+        start (Tuple[int, int]): Starting coordinate (x, y).
+        end (Optional[Tuple[int, int]]): End coordinate, or None for corner.
 
     Returns:
-        List[Tuple[int, int]]: Lista de coordenadas que formam o caminho.
+        List[Tuple[int, int]]: List of coordinates forming the path.
     """
     height: int = len(grid)
     width: int = len(grid[0])
@@ -29,7 +28,7 @@ def solve(
     parent_map: Dict[Tuple[int, int],
                      Optional[Tuple[int, int]]] = {start: None}
 
-    # Direções padrão conforme o PDF (N, E, S, W)
+    # Standard directions according to PDF (N, E, S, W)
     directions: Dict[str, Tuple[int, int, int]] = {
         'N': (0, -1, 1),
         'E': (1, 0, 2),
@@ -46,11 +45,11 @@ def solve(
         cell_value: int = grid[curr_y][curr_x]
 
         for _, (dx, dy, bit) in directions.items():
-            # 1. Verifica se a parede está aberta usando o bit
+            # 1. Check if wall is open using bit
             if cell_value & bit:
                 nx, ny = curr_x + dx, curr_y + dy
 
-                # 2. Verifica limites e se já foi visitado
+                # 2. Check bounds and if already visited
                 if (
                     0 <= nx < width and 0 <= ny < height
                     and (nx, ny) not in visited
@@ -59,10 +58,10 @@ def solve(
                     parent_map[(nx, ny)] = (curr_x, curr_y)
                     stack.append((nx, ny))
 
-    # Reconstrução do caminho (Backtracking)
+    # Path reconstruction (Backtracking)
     path: List[Tuple[int, int]] = []
 
-    # Caso o destino nunca tenha sido alcançado, retorna lista vazia
+    # If the destination was never reached, return empty list
     if end not in parent_map:
         return []
 
