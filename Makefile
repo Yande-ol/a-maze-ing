@@ -31,11 +31,11 @@ clean:
 	rm -f maze.txt
 
 lint:
-	$(FLAKE8) $(SRC)
-	$(MYPY) $(SRC) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	$(FLAKE8) . --exclude venv
+	$(MYPY) . --exclude 'venv/' --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	$(FLAKE8) $(SRC)
-	$(MYPY) $(SRC) --strict
+	$(FLAKE8) . --exclude venv
+	$(MYPY) . --exclude 'venv/' --strict
 
 .PHONY: all install run debug viz vix clean lint lint-strict

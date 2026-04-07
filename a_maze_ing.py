@@ -90,6 +90,9 @@ def main() -> None:
         # Generate Maze
         generator = MazeGenerator(cfg["width"], cfg["height"])
         maze_grid = generator.generate(cfg["algorithm"])
+        if not cfg["perfect"]:
+            generator.make_imperfect()
+            maze_grid = generator.grid
 
         # Validate maze structure before solving/saving
         validate_maze_structure(

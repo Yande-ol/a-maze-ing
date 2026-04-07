@@ -1,8 +1,9 @@
 import os
 import sys
 import random
+from typing import Any, Optional, cast
 
-from mlx import Mlx  # type: ignore
+from mlx import Mlx  # pyright: ignore[reportMissingImports]
 
 from mazegen.generator import MazeGenerator
 from mazegen.solver import solve
@@ -16,7 +17,7 @@ if PROJECT_ROOT not in sys.path:
 # --- HELPER FUNCTIONS ---
 
 
-def build_pattern_42(cols, rows):
+def build_pattern_42(cols: int, rows: int) -> list[tuple[int, int]]:
     """Create coordinates for '42' pattern centered on the map."""
     pattern = [
         # Digit 4
@@ -37,11 +38,19 @@ def build_pattern_42(cols, rows):
     return coords
 
 
+def parse_coord_pair(value: str) -> tuple[int, int]:
+    """Parse coordinate pair in x,y format."""
+    parts = value.split(",")
+    if len(parts) != 2:
+        raise ValueError(f"Invalid coordinate format: {value}")
+    return (int(parts[0]), int(parts[1]))
+
+
 # --- MAIN CLASS ---
 
 
 class MazeApp:
-    def __init__(self, maze_file):
+    def __init__(self, maze_file: str) -> None:
         self.maze_file = maze_file
         self.project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..")
@@ -49,10 +58,10 @@ class MazeApp:
         self.config_file = os.path.join(self.project_root, "config.txt")
         self.margin = 30
         self.animating_generation = False
-        self.generation_generator = None
+        self.generation_generator: Optional[MazeGenerator] = None
         self.generation_output_file = ""
-        self.generation_entry = (0, 0)
-        self.generation_exit = (0, 0)
+        self.generation_entry: tuple[int, int] = (0, 0)
+        self.generation_exit: tuple[int, int] = (0, 0)
         self.generation_perfect = True
         self.generation_algorithm = "dfs"
         self.generation_timer = 0
@@ -60,6 +69,13 @@ class MazeApp:
         # lower interval + more steps per cycle = faster.
         self.generation_interval = 0.0
         self.generation_steps_per_tick = 15
+
+        self.grid: list[list[Any]] = []
+        self.rows: int = 0
+        self.cols: int = 0
+        self.start_pos: tuple[int, int] = (0, 0)
+        self.end_pos: tuple[int, int] = (0, 0)
+        self.solution: str = ""
 
         # 1. MiniLibX connection
         self.m = Mlx()
@@ -110,7 +126,7 @@ class MazeApp:
 
         self.print_menu()
 
-    def load_config(self):
+    def load_config(self) -> dict[str, str]:
         """Load base configuration used to generate new mazes."""
         config = parse_config(self.config_file)
         required_keys = [
@@ -122,19 +138,19 @@ class MazeApp:
                 raise ValueError(msg)
         return config
 
-    def is_prim_selected(self):
+    def is_prim_selected(self) -> bool:
         """Return True when config selects Prim as generation algorithm."""
         config = self.load_config()
         algo = config.get("ALGORITHM", "dfs").strip().lower()
         return algo == "prim"
 
-    def generate_new_maze_file(self):
+    def generate_new_maze_file(self) -> str:
         """Generate new maze, overwrite configured file and return path."""
         config = self.load_config()
         width = int(config["WIDTH"])
         height = int(config["HEIGHT"])
-        entry = tuple(map(int, config["ENTRY"].split(",")))
-        exit_coords = tuple(map(int, config["EXIT"].split(",")))
+        entry = parse_coord_pair(config["ENTRY"])
+        exit_coords = parse_coord_pair(config["EXIT"])
         perfect = config["PERFECT"].strip().lower() == "true"
         algorithm = config.get("ALGORITHM", "dfs").strip().lower()
 
@@ -146,6 +162,9 @@ class MazeApp:
 
         generator = MazeGenerator(width, height)
         grid = generator.generate(algorithm)
+        if not perfect:
+            generator.make_imperfect()
+            grid = generator.grid
         validate_maze_structure(grid, entry, exit_coords, perfect)
 
         path = solve(grid, entry, exit_coords)
@@ -157,7 +176,7 @@ class MazeApp:
         save_maze(output_file, grid, entry, exit_coords, path_letters)
         return output_file
 
-    def reload_maze(self):
+    def reload_maze(self) -> None:
         """Generate new maze in configured file and reload visual state."""
         self.maze_file = self.generate_new_maze_file()
         self.parse_file(self.maze_file)
@@ -171,13 +190,13 @@ class MazeApp:
         self.render_all()
         self.print_menu()
 
-    def start_generation_animation(self):
+    def start_generation_animation(self) -> None:
         """Start animated Prim generation using current configuration file."""
         config = self.load_config()
         width = int(config["WIDTH"])
         height = int(config["HEIGHT"])
-        entry = tuple(map(int, config["ENTRY"].split(",")))
-        exit_coords = tuple(map(int, config["EXIT"].split(",")))
+        entry = parse_coord_pair(config["ENTRY"])
+        exit_coords = parse_coord_pair(config["EXIT"])
         perfect = config["PERFECT"].strip().lower() == "true"
         algorithm = config.get("ALGORITHM", "dfs").strip().lower()
 
@@ -210,11 +229,11 @@ class MazeApp:
         self.start_pos = entry
         self.end_pos = exit_coords
         self.pattern_coords = build_pattern_42(self.cols, self.rows)
-        self.grid = self.generation_generator.grid
+        self.grid = cast(list[list[Any]], self.generation_generator.grid)
         self.render_all()
         self.print_menu()
 
-    def animate_generation(self):
+    def animate_generation(self) -> None:
         """Advance one step of animated Prim generation."""
         if not self.animating_generation or self.generation_generator is None:
             return
@@ -236,6 +255,10 @@ class MazeApp:
             self.render_all()
             return
 
+        if not self.generation_perfect:
+            self.generation_generator.make_imperfect()
+            self.grid = cast(list[list[Any]], self.generation_generator.grid)
+
         path = solve(self.grid, self.generation_entry, self.generation_exit)
         path_letters = get_path_letters(path)
         save_maze(
@@ -254,7 +277,7 @@ class MazeApp:
         self.render_all()
         self.print_menu()
 
-    def on_loop(self, *args):
+    def on_loop(self, *args: object) -> None:
         """Main MLX loop for generation animation and path animation."""
         if self.animating_generation:
             self.animate_generation()
@@ -262,7 +285,7 @@ class MazeApp:
 
         self.animate_duck()
 
-    def parse_file(self, filename):
+    def parse_file(self, filename: str) -> None:
         """Read maze.txt file and extract Grid, Start/End and Solution."""
         try:
             with open(filename, 'r') as f:
@@ -274,16 +297,16 @@ class MazeApp:
             sys.exit(1)
 
         self.grid = []
-        coords = []
+        coords: list[tuple[int, int]] = []
         self.solution = ""
 
         for line in lines:
             if ',' in line:
-                coords.append(tuple(map(int, line.split(','))))
+                coords.append(parse_coord_pair(line))
             elif all(c in "SWEN" for c in line) and len(line) > 2:
                 self.solution = line
             else:
-                self.grid.append(line)
+                self.grid.append([char for char in line])
 
         self.rows = len(self.grid)
         self.cols = len(self.grid[0])
@@ -292,9 +315,9 @@ class MazeApp:
             coords[1] if len(coords) > 1 else (self.cols - 1, self.rows - 1)
         )
 
-    def load_all_sprites(self):
+    def load_all_sprites(self) -> dict[str, list[object | None]]:
         """Load duck XPMs."""
-        def load_xpm(name):
+        def load_xpm(name: str) -> object | None:
             base_path = os.path.join(os.path.dirname(__file__), name)
             res = self.m.mlx_xpm_file_to_image(self.mlx_ptr, base_path)
             return res[0] if res else None
@@ -308,17 +331,17 @@ class MazeApp:
 
     # --- DRAWING AND RENDERING ---
 
-    def put_pixel(self, x, y, color):
+    def put_pixel(self, x: int, y: int, color: int) -> None:
         if 0 <= x < self.maze_w and 0 <= y < self.maze_h:
             offset = (y * self.sl) + (x * (self.bpp // 8))
             self.data[offset:offset+4] = color.to_bytes(4, 'little')
 
-    def draw_rect(self, x, y, w, h, color):
+    def draw_rect(self, x: int, y: int, w: int, h: int, color: int) -> None:
         for i in range(h):
             for j in range(w):
                 self.put_pixel(x + j, y + i, color)
 
-    def render_all(self, *args):
+    def render_all(self, *args: object) -> None:
         """Draw maze using bitwise logic from requirements."""
         w_color = self.palette[self.idx_wall]
         b_color = self.palette[self.idx_bg]
@@ -371,7 +394,7 @@ class MazeApp:
         )
         self.draw_duck()
 
-    def draw_path(self):
+    def draw_path(self) -> None:
         cx, cy = self.start_pos
         thick = 14
         path_color = 0xFF3498DB
@@ -394,7 +417,7 @@ class MazeApp:
             h = abs(old_py - new_py) + thick
             self.draw_rect(x_s, y_s, w, h, path_color)
 
-    def draw_duck(self):
+    def draw_duck(self) -> None:
         if self.show_path:
             img = self.sprites[self.pato_dir][self.pato_frame]
             if img:
@@ -406,7 +429,7 @@ class MazeApp:
                     self.margin + (self.pato_y * self.tile) + 5,
                 )
 
-    def _cell_open_bits(self, cell):
+    def _cell_open_bits(self, cell: Any) -> int:
         """Convert cell (internal int or file hex) to open bits."""
         if isinstance(cell, int):
             return cell
@@ -414,7 +437,7 @@ class MazeApp:
 
     # --- LOGIC AND EVENTS ---
 
-    def animate_duck(self, *args):
+    def animate_duck(self, *args: object) -> None:
         if not self.show_path:
             return
         self.duck_timer += 1
@@ -437,7 +460,7 @@ class MazeApp:
             self.duck_step += 1
             self.render_all()
 
-    def handle_key(self, key, *args):
+    def handle_key(self, key: int, *args: object) -> None:
         if key == 65307:
             self.clean_exit()
         elif key == 32:
@@ -459,26 +482,21 @@ class MazeApp:
             self.idx_42 = (self.idx_42 + 1) % len(self.palette)
         self.render_all()
 
-    def clean_exit(self, *args):
+    def clean_exit(self, *args: object) -> None:
         self.m.mlx_destroy_window(self.mlx_ptr, self.win_ptr)
         os._exit(0)
 
-    import os
-
-    import os
-
-    def print_menu(self):
+    def print_menu(self) -> None:
         os.system("clear")
-        width = 44 
-        
-    
+        width = 44
+
         header_border = "╔" + "═" * (width - 2) + "╗"
         footer_border = "╚" + "═" * (width - 2) + "╝"
         divider = "╟" + "─" * (width - 2) + "╢"
 
         title = " A-MAZE-ING 42"
         print(f"\n{header_border}")
-        print(f"║{title.center(width - 3)} ║") 
+        print(f"║{title.center(width - 3)} ║")
         print(f"{divider}")
 
         options = [
@@ -491,7 +509,7 @@ class MazeApp:
         ]
 
         max_opt_len = max(len(opt) for opt in options)
-        
+
         padding = (width - 2 - max_opt_len) // 2
 
         print("║" + " " * (width - 2) + "║")
@@ -504,7 +522,7 @@ class MazeApp:
         print("║" + " " * (width - 2) + "║")
         print(f"{footer_border}\n")
 
-    def run(self):
+    def run(self) -> None:
         if self.is_prim_selected():
             self.start_generation_animation()
         else:

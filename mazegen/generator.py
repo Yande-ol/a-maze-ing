@@ -289,3 +289,71 @@ class MazeGenerator:
 
         msg = f"Unknown maze generation algorithm: {algorithm}"
         raise ValueError(msg)
+
+    def _has_3x3_open_area(self) -> bool:
+        """Return True when current grid contains a fully open 3x3 block."""
+        if self.width < 3 or self.height < 3:
+            return False
+
+        for y in range(self.height - 2):
+            for x in range(self.width - 2):
+                opened = True
+                for yy in range(y, y + 3):
+                    for xx in range(x, x + 2):
+                        if (
+                            not self.grid[yy][xx] & 2
+                            or not self.grid[yy][xx + 1] & 8
+                        ):
+                            opened = False
+                            break
+                    if not opened:
+                        break
+                if opened:
+                    for yy in range(y, y + 2):
+                        for xx in range(x, x + 3):
+                            if (
+                                not self.grid[yy][xx] & 4
+                                or not self.grid[yy + 1][xx] & 1
+                            ):
+                                opened = False
+                                break
+                        if not opened:
+                            break
+                if opened:
+                    return True
+
+        return False
+
+    def make_imperfect(self, openings: int = 3) -> int:
+        """Open a few random walls to create loops when PERFECT=False."""
+        if openings <= 0:
+            return 0
+
+        opened = 0
+        tries = max(10, self.width * self.height)
+
+        while opened < openings and tries > 0:
+            tries -= 1
+
+            x = random.randrange(self.width - 1)
+            y = random.randrange(self.height - 1)
+
+            if random.choice((True, False)):
+                nx, ny, bit = x + 1, y, 2
+            else:
+                nx, ny, bit = x, y + 1, 4
+
+            if self.grid[y][x] == 0 or self.grid[ny][nx] == 0:
+                continue
+            if self.grid[y][x] & bit:
+                continue
+
+            self._carve_passage(x, y, nx, ny, bit)
+            if self._has_3x3_open_area():
+                self.grid[y][x] &= ~bit
+                self.grid[ny][nx] &= ~self._opposite_bit(bit)
+                continue
+
+            opened += 1
+
+        return opened
