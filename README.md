@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by febraga-, yande-ol.*
+*This project has been created by febraga-, yande-ol.*
 
 # A-Maze-ing
 
